@@ -1,0 +1,13 @@
+name: Run
+on: [push]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: docker build rails image
+        run: |
+          cd rails-api
+          docker build . -t ${{ github.sha }}
