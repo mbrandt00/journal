@@ -1,0 +1,47 @@
+---
+require:
+  - rubocop-rspec
+  - rubocop-rails
+AllCops:
+  Exclude:
+    - "db/*/**"
+    - "db/schema.rb"
+    - "/config/*/**"
+    - "bin/*"
+    - "app/helpers/depth_chart_helper.rb"
+    - "config/environments/development.rb"
+  NewCops: enable
+Style/FrozenStringLiteralComment:
+  Enabled: false
+Layout/LineLength:
+  Enabled: false
+Naming/VariableNumber:
+  Enabled: false
+Style/ClassAndModuleChildren:
+  Enabled: false
+Style/Documentation:
+  Enabled: false
+Style/IdenticalConditionalBranches:
+  Enabled: false
+# Rspec
+RSpec/InstanceVariable:
+  Enabled: false
+RSpec/MultipleExpectations:
+  Enabled: false
+RSpec/ExampleLength:
+  Enabled: false
+RSpec/NamedSubject:
+  Enabled: false
+RSpec/DescribedClass:
+  Enabled: false
+RSpec/PendingWithoutReason:
+  Enabled: false
+# Rails
+Rails/Date:
+  Enabled: false
+Rails/LexicallyScopedActionFilter:
+  Enabled: false
+Metrics/AbcSize:
+  Enabled: false
+Rails/HasAndBelongsToMany:
+  Enabled: false

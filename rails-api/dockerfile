@@ -1,0 +1,28 @@
+FROM ruby:3.1.2
+
+ENV APP_HOME /rails_api
+
+RUN mkdir $APP_HOME
+
+# copy gemfile to install gems
+
+COPY Gemfile Gemfile.lock $APP_HOME/
+WORKDIR $APP_HOME
+RUN apt-get -qq update >/dev/null
+# psql
+RUN apt-get -qq install -y postgresql-client
+# nokogiri
+RUN apt-get -qq install -y zlib1g-dev liblzma-dev patch
+# bundler
+RUN gem install bundler -v 1.17.3
+
+# Copy project files
+COPY . $APP_HOME/
+
+# Install Gems
+
+RUN bundle lock --add-platform x86_64-linux
+RUN bundle install --quiet
+RUN bundle check
+
+CMD rm -f tmp/pids/server.pid && bundle exec rails s -p 80 -b '0.0.0.0'
