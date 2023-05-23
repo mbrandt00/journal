@@ -18,6 +18,7 @@ RUN gem install bundler -v 1.17.3
 
 # Copy project files
 COPY . $APP_HOME/
+RUN chmod +x $APP_HOME/docker-scripts/rspec-entrypoint.sh
 
 # Install Gems
 

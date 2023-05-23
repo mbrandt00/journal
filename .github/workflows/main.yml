@@ -6,6 +6,9 @@ on:
   push:
     branches:
       - main
+env:
+  TAG_COMMIT_PATH: ${{secrets.AWS_ACCOUNT_ID}}.dkr.ecr.us-east-1.amazonaws.com/use1-${{github.event.repository.name}}-ecr:${{github.run_attempt}}
+
 jobs:
   build:
     name: Build
@@ -30,19 +33,41 @@ jobs:
 
       - name: Build, Tag, and Push Image to Amazon ECR
         id: build-image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry}}
-          ECR_REPOSITORY: journal
-          IMAGE_TAG: ${{ github.sha}}
         run: |
           cd rails-api
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG . 
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-  DeployDev:
+          echo $TAG_COMMIT_PATH
+          docker build -t $TAG_COMMIT_PATH .
+          docker push $TAG_COMMIT_PATH
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: [build]
+    env:
+      DATABASE_NAME: journal_test
+      DATABASE_HOST: localhost
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: password
+      RAILS_ENV: test
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}
+          aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+          aws-region: us-east-1
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: rspec
+        run: docker compose up rspec --quiet-pull
+        working-directory: rails-api
+  deploy-dev:
     name: Deploy to Dev
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
-    needs: [build]
+    needs: [test]
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
