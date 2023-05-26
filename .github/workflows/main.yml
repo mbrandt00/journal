@@ -79,13 +79,49 @@ jobs:
         if: success() || failure() # always run even if the previous step fails
         with:
           report_paths: "rspec.xml"
+  cdk-diff:
+    name: CDK Diff
+    runs-on: ubuntu-latest
+    needs: [ test ]
+    env:
+      REGION_PREFIX: use1
+      ENVIRONMENT: dev
+      PROJECT_NAME: journal
+      ECR_REPO: ${{secrets.ECR_REPO}}
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+      - name: Install Python dependencies and CDK
+        run: |
+          python -m pip install --upgrade pip
+          # install your Python dependencies here
+          npm install -g aws-cdk
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}
+          aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+          aws-region: us-east-1
+      - name: Deploy to AWS
+        run: |
+          cd infrastructure
+          pip install -q -r requirements.txt
+          cdk diff
   deploy-dev:
     name: Deploy to Dev
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     environment:
-      name: Dev
-    needs: [ test ]
+      name: dev
+    needs: [ cdk-diff ]
     env:
       REGION_PREFIX: use1
       ENVIRONMENT: dev
@@ -120,5 +156,4 @@ jobs:
         run: |
           cd infrastructure
           pip install -q -r requirements.txt
-          cdk diff
           cdk deploy --require-approval=never
