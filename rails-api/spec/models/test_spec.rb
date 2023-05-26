@@ -1,11 +1,7 @@
-require "rails_helper"
+require 'rails_helper'
 
-RSpec.describe "test" do
-  it "will return a passing test" do
-    expect(true).to be true
-  end
-
-  it "will return a failing test" do
-    expect(true).to be false
+RSpec.describe 'test' do
+  it 'will return a passing test' do
+    expect(1 + 1).to eq(2)
   end
 end
