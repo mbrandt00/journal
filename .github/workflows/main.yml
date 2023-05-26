@@ -83,6 +83,8 @@ jobs:
     name: Deploy to Dev
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
+    environment:
+      name: Dev
     needs: [ test ]
     env:
       REGION_PREFIX: use1
