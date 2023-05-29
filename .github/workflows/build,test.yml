@@ -73,7 +73,7 @@ jobs:
         with:
           report_paths: "rspec.xml"
   cdk-diff:
-    name: CDK diff
+    name: Resource Diff
     needs: [test]
     secrets: inherit
     uses: ./.github/workflows/cdk-diff.yml

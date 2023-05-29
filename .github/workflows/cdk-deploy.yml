@@ -1,10 +1,10 @@
-# name: CDK deploy
 on: [workflow_call]
 jobs:
   cdk_deploy:
+    name: CDK Deploy
     runs-on: ubuntu-latest
-    # environment:
-    #   name: dev
+    environment:
+      name: dev
     env:
       REGION_PREFIX: use1
       ENVIRONMENT: dev
