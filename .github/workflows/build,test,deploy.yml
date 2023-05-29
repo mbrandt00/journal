@@ -75,13 +75,11 @@ jobs:
   cdk-diff:
     name: Resource Diff
     needs: [test]
-    uses: ./.github/workflows/cdk_diff.yml
+    uses: ./.github/workflows/cdk-diff.yml
     secrets: inherit
 
   cdk-deploy:
     name: Deploy
-    environment:
-      name: dev
     needs: [cdk-diff]
     uses: ./.github/workflows/cdk-deploy.yml
     secrets: inherit
