@@ -1,11 +1,10 @@
-name: CDK diff
-on: [ workflow_call ]
+# name: CDK diff
+on: [workflow_call]
 jobs:
   cdk_diff:
-    name: Resource Diff
-    runs_on: ubuntu-latest
-    environment:
-      name: dev
+    runs-on: ubuntu-latest
+    # environment:
+    #   name: dev
     env:
       REGION_PREFIX: use1
       ENVIRONMENT: dev

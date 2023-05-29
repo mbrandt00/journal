@@ -41,7 +41,7 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    needs: [ build ]
+    needs: [build]
     env:
       DATABASE_NAME: journal_test
       DATABASE_HOST: localhost
@@ -65,7 +65,7 @@ jobs:
           docker compose up rspec --quiet-pull
           docker cp rspec:/rails_api/rspec.xml ..
           docker compose down
-          # if grep -q 'failures="0"' rspec.xml; then echo no rspec errors; exit 0; else echo rspec errors; exit 1; fi
+          if grep -q 'failures="0"' rspec.xml; then echo no rspec errors; exit 0; else echo rspec errors; exit 1; fi
         working-directory: rails-api
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v3
@@ -73,6 +73,13 @@ jobs:
         with:
           report_paths: "rspec.xml"
   cdk-diff:
-    uses: ./cdk_diff.yml
+    needs: [test]
+    uses: ./.github/workflows/cdk_diff.yml
+    secrets: inherit
+
   cdk-deploy:
-    uses: ./cdk_deply.yml
+    environment:
+      name: dev
+    needs: [cdk-diff]
+    uses: ./.github/workflows/cdk_deply.yml
+    secrets: inherit
