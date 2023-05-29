@@ -1,10 +1,5 @@
 name: Build, Test, Deploy
 on:
-  pull_request:
-    branches:
-      - main
-    # types: [closed]
-
   push:
     branches:
       - main
@@ -77,51 +72,16 @@ jobs:
         if: success() || failure() # always run even if the previous step fails
         with:
           report_paths: "rspec.xml"
+  cdk-diff:
+    name: Resource Diff
+    needs: [test]
+    uses: ./.github/workflows/cdk_diff.yml
+    secrets: inherit
+
   cdk-deploy:
-    name: CDK Diff
-    runs-on: ubuntu-latest
+    name: Deploy
     environment:
       name: dev
-    needs: [test]
-    env:
-      REGION_PREFIX: use1
-      ENVIRONMENT: dev
-      PROJECT_NAME: journal
-      ECR_REPO: ${{secrets.ECR_REPO}}
-
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.9"
-      - name: Set up Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: "16"
-      - name: Install Python dependencies and CDK
-        run: |
-          python -m pip install --upgrade pip
-          # install your Python dependencies here
-          npm install -g aws-cdk
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@master
-        with:
-          aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}
-          aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
-          aws-region: us-east-1
-      - name: CDK DIFF
-        run: |
-          cd infrastructure
-          pip install -q -r requirements.txt
-          cdk diff
-      - name: Deploy to Dev
-        if: github.event.pull_request.merged == true
-        run: |
-          echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-          echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-          echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-          echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-          cd infrastructure
-          pip install -q -r requirements.txt
-          cdk deploy --require-approval=never
+    needs: [cdk-diff]
+    uses: ./.github/workflows/cdk-deploy.yml
+    secrets: inherit
