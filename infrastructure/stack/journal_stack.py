@@ -15,7 +15,7 @@ from constructs import Construct
 
 def generateResourceName(resource):
     application_prefix = "-".join([x.lower() for x in [os.getenv("REGION_PREFIX"), os.getenv("ENVIRONMENT"), os.getenv("PROJECT_NAME")]])
-    return application_prefix + resource
+    return application_prefix + '-' + resource
 class JournalStack(Stack):
 
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
