@@ -21,11 +21,6 @@ class JournalStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        # ecr repository 
-        repo = ecr.Repository(
-            self, generateResourceName("ecr"), repository_name=os.getenv("ECR_REPO")
-            ) 
-    
         # lambda definition 
         DATA_SOURCE = 'lastFm'
         lastfm_layer_name = generateResourceName('lambda-layer-lastFm')
