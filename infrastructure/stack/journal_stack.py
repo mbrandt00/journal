@@ -34,7 +34,7 @@ class JournalStack(Stack):
             self, 
             lastfm_layer_name,
             layer_version_name=lastfm_layer_name,
-            entry =f'../{DATA_SOURCE}Pipeline/lambdas/{DATA_SOURCE}_layer/'
+            entry =f'../data-pipelines/{DATA_SOURCE}Pipeline/lambdas/{DATA_SOURCE}_layer/'
         )
 
         lambda_function_name = generateResourceName('ingest-lastFm')
@@ -42,11 +42,11 @@ class JournalStack(Stack):
         lambda_function = lpa.PythonFunction(
             self, 
             lambda_function_name, 
-            runtime=_lambda.RUntime.PYTHON_3_7, 
+            runtime=_lambda.runtime.PYTHON_3_7, 
             timeout= Duration.seconds(900),
             memory_size=256,
             # environment = {}, 
-            entry=f'../{DATA_SOURCE}Pipeline/lambdas/{DATA_SOURCE}_ingest/',
+            entry=f'../data-pipelines/{DATA_SOURCE}Pipeline/lambdas/{DATA_SOURCE}_ingest/',
             index='lambda_function.py',
             handler = 'lambda_handler', 
             layers=[lambda_layer]
