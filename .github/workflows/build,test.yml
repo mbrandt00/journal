@@ -9,16 +9,37 @@ env:
   TAG_COMMIT_PATH: ${{secrets.AWS_ACCOUNT_ID}}.dkr.ecr.us-east-1.amazonaws.com/${{secrets.ECR_REPO}}:${{github.sha}}
 
 jobs:
+  files-changed:
+    name: detect what files changed
+    id: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      backend: ${{ steps.filter.outputs.backend}}
+      infrastructure: ${{ steps.filter.outputs.infrastructure}}
+      datapipelines: ${{ steps.filter.outputs.datapipelines}}
+    steps:
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            backend: 
+              - 'rails-api/**'
+            infrastructure: 
+              - 'infrastructure/**' 
+            datapipelines: 
+              - 'data-pipelines/**'
+
   build:
     name: Build
     runs-on: ubuntu-latest
+    needs: [ files-changed ]
+    if: ${{needs.files-changed.outputs.backend == 'true' }}
     env:
       AWS_REGION: ${{ secrets.AWS_REGION}}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID}}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
     steps:
-      - name: Add SHORT_SHA env property with commit short sha
-        run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
       - name: Checkout
         uses: actions/checkout@v3
 
@@ -38,10 +59,11 @@ jobs:
           cd rails-api
           docker build -t $TAG_COMMIT_PATH .
           docker push $TAG_COMMIT_PATH
+
   test:
     name: Test
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [ build ]
     env:
       DATABASE_NAME: journal_test
       DATABASE_HOST: localhost
@@ -72,8 +94,10 @@ jobs:
         if: success() || failure() # always run even if the previous step fails
         with:
           report_paths: "rspec.xml"
+
   cdk-diff:
     name: Resource Diff
-    needs: [test]
+    needs: [ files-changed ]
+    if: ${{needs.files-changed.outputs.infrastructure || needs.files-changed.outputs.datapipelines}}
     secrets: inherit
     uses: ./.github/workflows/cdk-diff.yml
