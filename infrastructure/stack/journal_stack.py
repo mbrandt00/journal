@@ -81,11 +81,14 @@ class JournalStack(Stack):
         # definition = parallel_execution.build()
         state_machine_name = generateResourceName('state-machine')
 
+
         # state_machine = sfn.StateMachine(
         sfn.StateMachine(
             self,
             state_machine_name,
+
             definition=parallel_execution,
+
             state_machine_name=state_machine_name
         )
 
