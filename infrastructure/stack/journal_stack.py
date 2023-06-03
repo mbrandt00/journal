@@ -31,18 +31,15 @@ class JournalStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        SEED_ENDPOINTS = [
-            {
-                "endpoint_name": "lastFm",
-            },
-        ]
-        seed_node = sfn.Pass(
-            self,
-            "API Seed Values",
-            result=sfn.Result.from_array(SEED_ENDPOINTS)
-        )
+        def _create_lambda_step(id, lambda_function):
+            return sfn_tasks.LambdaInvoke(
+                self,
+                id,
+                lambda_function=lambda_function
+            )
 
         data_sources = ['lastFm']
+        lambdas = []
         for data_source in data_sources:
 
             # lambda definition
@@ -70,32 +67,25 @@ class JournalStack(Stack):
                 handler='lambda_handler',
                 layers=[lambda_layer]
             )
-            lambda_node = sfn_tasks.LambdaInvoke(
-                self,
-                f"{data_source} Ingest Lambda",
-                lambda_function=lambda_function
-            )
-            map_node = sfn.Map(
-                self,
-                "Map State",
-                items_path=sfn.JsonPath.string_at("$")
-            )
-            map_node.iterator(lambda_node)
 
-        definition = (
-            seed_node.next(map_node)
-            # .next(glue raw node)
-        )
+            lambdas.append(lambda_function)
+        parallel_execution = sfn.Parallel(self, 'ParallelIngest')
+        for lambda_function in lambdas:
+            parallel_execution.branch(sfn_tasks.LambdaInvoke(
+                self,
+                f'Invoke{lambda_function.function_name}',
+                lambda_function=lambda_function)
+            )
 
         # state machine
-
+        # definition = parallel_execution.build()
         state_machine_name = generateResourceName('state-machine')
 
         # state_machine = sfn.StateMachine(
         sfn.StateMachine(
             self,
             state_machine_name,
-            definition=definition,
+            definition=parallel_execution,
             state_machine_name=state_machine_name
         )
 
