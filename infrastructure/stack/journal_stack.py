@@ -45,14 +45,15 @@ class JournalStack(Stack):
             #     layer_version_name=layer_name,
             #     entry=f'../data-pipelines/{data_source}Pipeline/lambdas/{data_source}_layer/'
             # )
-            lambdaLayer = _lambda.LayerVersion(
-                self,
-                layer_name,
-                code=_lambda.AssetCode(
-                    f'../data-pipelines/{data_source}Pipeline/lambdas/{data_source}_layer/'),
-                compatible_runtimes=[
-                    _lambda.Runtime.PYTHON_3_9],
-            )
+            # lambdaLayer = _lambda.LayerVersion(
+            #     self,
+            #     layer_name,
+            #     code=_lambda.AssetCode(
+            #         f'../data-pipelines/{data_source}Pipeline/lambdas/{data_source}_layer/'),
+            #     compatible_runtimes=[
+            #         _lambda.Runtime.PYTHON_3_9],
+            # )
+
             lambda_function_name = generateResourceName(
                 f"ingest-{data_source}")
 
@@ -68,12 +69,13 @@ class JournalStack(Stack):
                         image=_lambda.Runtime.PYTHON_3_9.bundling_image,
                         command=[
                             "bash", "-c",
-                            "pip install --no-cache -r requirements.txt -t /asset-output && cp -au . /asset-output"
+                            "pip install --no-cache -r requirements.txt -t /asset-output && cp -au . /asset-output",
+                            "cp -au "
                         ],
                     ),
                 ),
                 # role=lambda_role,
-                layers=[lambdaLayer],
+                # layers=[lambdaLayer],
                 environment={}
             )            # lambda_function_name = generateResourceName(
         #     f"ingest-{data_source}")
@@ -91,7 +93,7 @@ class JournalStack(Stack):
         #     layers=[lambda_layer]
         # )
 
-        lambdas.append(cdk_lambda)
+            lambdas.append(cdk_lambda)
         parallel_execution = sfn.Parallel(self, 'ParallelIngest')
         for lambda_function in lambdas:
             parallel_execution.branch(sfn_tasks.LambdaInvoke(
