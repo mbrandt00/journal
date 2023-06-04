@@ -51,7 +51,7 @@ class JournalStack(Stack):
             lambda_function = lpa.PythonFunction(
                 self,
                 lambda_function_name,
-                runtime=_lambda.Runtime.PYTHON_3_8,
+                runtime=_lambda.Runtime.PYTHON_3_7,
                 timeout=Duration.seconds(900),
                 memory_size=256,
                 # environment = {},
