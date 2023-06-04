@@ -1,6 +1,6 @@
-from stravalib.client import Client
+# from stravalib.client import Client
 
 
 def lambda_handler(event, context):
     print('hello')
-    client = Client()
+    # client = Client()
