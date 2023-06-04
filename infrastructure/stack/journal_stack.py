@@ -62,11 +62,11 @@ class JournalStack(Stack):
             )
             lambdas.append(cdk_lambda)
 
-        parallel_execution = sfn.Parallel(self, 'ParallelIngest')
+        parallel_execution = sfn.Parallel(self, 'Parallel Ingest')
         for lambda_function in lambdas:
             parallel_execution.branch(sfn_tasks.LambdaInvoke(
                 self,
-                f'Invoke{lambda_function.function_name}',
+                lambda_function.function_name,
                 lambda_function=lambda_function)
             )
 
