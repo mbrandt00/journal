@@ -31,14 +31,7 @@ class JournalStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        def _create_lambda_step(id, lambda_function):
-            return sfn_tasks.LambdaInvoke(
-                self,
-                id,
-                lambda_function=lambda_function
-            )
-
-        data_sources = ['lastFm']
+        data_sources = ['lastFm', 'strava']
         lambdas = []
         for data_source in data_sources:
 
@@ -58,7 +51,7 @@ class JournalStack(Stack):
             lambda_function = lpa.PythonFunction(
                 self,
                 lambda_function_name,
-                runtime=_lambda.Runtime.PYTHON_3_7,
+                runtime=_lambda.Runtime.PYTHON_3_8,
                 timeout=Duration.seconds(900),
                 memory_size=256,
                 # environment = {},
@@ -80,7 +73,6 @@ class JournalStack(Stack):
         # state machine
         # definition = parallel_execution.build()
         state_machine_name = generateResourceName('state-machine')
-
 
         # state_machine = sfn.StateMachine(
         sfn.StateMachine(
