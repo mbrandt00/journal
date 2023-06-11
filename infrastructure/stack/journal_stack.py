@@ -83,7 +83,9 @@ class JournalStack(Stack):
 
         data_sources = ["lastFm", "strava"]
         lambdas = []
-
+        self.s3_managed_policy = iam.ManagedPolicy.from_aws_managed_policy_name(
+            "AmazonS3FullAcess"
+        )
         # ingest lambdas
         for data_source in data_sources:
             lambda_function_name = generateResourceName(f"ingest-{data_source}")
@@ -109,6 +111,7 @@ class JournalStack(Stack):
                 # role=lambda_role,
                 environment={},
             )
+            cdk_lambda.role.add_managed_policy(self.s3_managed_policy)
             for secret in secrets:
                 if secret.secret_name.split("-")[0] == data_source:
                     secret.grant_read(cdk_lambda)
