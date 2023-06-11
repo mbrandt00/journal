@@ -43,9 +43,17 @@ class JournalStack(Stack):
         # secrets
         strava_secret = secretsmanager.Secret.from_secret_attributes(
             self,
-            generateResourceName("strava-secret"),
-            secret_complete_arn="arn:aws:secretsmanager:us-east-1:211076628958:secret:dev/strava_api-gy8ImV",
+            "strava-secret",
+            secret_complete_arn="arn:aws:secretsmanager:us-east-1:211076628958:secret:strava-secret-A8v6xb",
         )
+
+        lastFm_secret = secretsmanager.Secret.from_secret_attributes(
+            self,
+            "lastFm-secret",
+            secret_complete_arn="arn:aws:secretsmanager:us-east-1:211076628958:secret:lastFm-secret-6jyCjo",
+        )
+
+        secrets = [strava_secret, lastFm_secret]
 
         strava_secret_lambda = _lambda.Function(
             self,
@@ -100,8 +108,9 @@ class JournalStack(Stack):
                 # role=lambda_role,
                 environment={},
             )
-            if cdk_lambda.function_name == generateResourceName("ingest-strava"):
-                cdk_lambda["environment"]["secret"] = strava_secret
+            for secret in secrets:
+                if secret.secret_name.split("-")[0] == data_source:
+                    secret.grant_read(cdk_lambda)
             lambdas.append(cdk_lambda)
 
         parallel_execution = sfn.Parallel(self, "Parallel Ingest")
