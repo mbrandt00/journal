@@ -94,6 +94,7 @@ class JournalStack(Stack):
                 runtime=_lambda.Runtime.PYTHON_3_9,
                 handler="lambda_function.lambda_handler",
                 function_name=lambda_function_name,
+                timeout=Duration.seconds(900),
                 code=_lambda.Code.from_asset(
                     f"../data-pipelines/{data_source}Pipeline/lambdas/{data_source}_ingest/",
                     bundling=bo(
