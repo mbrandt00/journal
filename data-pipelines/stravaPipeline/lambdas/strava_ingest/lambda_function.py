@@ -5,16 +5,15 @@ from datetime import timedelta
 
 
 def lambda_handler(event, context):
-    before = (
-        dt.datetime.today()
-        if event["time_to"] == "today"
-        else dt.datetime.strptime(event["time_to"], "%m-%d-%Y")
-    )
-    after = (
-        (dt.datetime.today() - timedelta(days=1))
-        if event["time_from"] == "yesterday"
-        else dt.datetime.strptime(event["time_to"], "%m-%d-%Y")
-    )
+    if event["time_to"] == "today":
+        before = dt.datetime.today()
+    else:
+        before = dt.datetime.strptime(event["time_to"], "%m-%d-%Y")
+
+    if event["time_from"] == "yesterday":
+        after = dt.datetime.today() - timedelta(days=1)
+    else:
+        after = dt.datetime.strptime(event["time_from"], "%m-%d-%Y")
     client = Client(access_token=access_token)
     activities = client.get_activities(
         after=after,
