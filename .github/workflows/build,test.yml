@@ -25,11 +25,11 @@ jobs:
         id: filter
         with:
           filters: |
-            backend: 
+            backend:
               - 'rails-api/**'
-            infrastructure: 
-              - 'infrastructure/**' 
-            datapipelines: 
+            infrastructure:
+              - 'infrastructure/**'
+            datapipelines:
               - 'data-pipelines/**'
 
   build:

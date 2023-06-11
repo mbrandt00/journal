@@ -6,7 +6,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def get_secret():
-    secret_name = "LAST_FM_SECRET"
+    secret_name = "lastFm-secret"
     region_name = "us-east-1"
 
     # Create a Secrets Manager client
