@@ -1,3 +1,8 @@
+import boto3
+import json
 
-def test():
-    return ('hello from strava api file')
+client = boto3.client("secretsmanager")
+
+access_token = json.loads(
+    client.get_secret_value(SecretId="dev/strava_api")["SecretString"]
+)["access_token"]
