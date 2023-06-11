@@ -2,8 +2,8 @@ name: Build, Test, Deploy
 
 on:
   push:
-    # branches:
-    #   - main
+    branches:
+      - main
 
 permissions:
   checks: write
