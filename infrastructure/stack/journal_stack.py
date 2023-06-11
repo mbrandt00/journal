@@ -51,22 +51,28 @@ class JournalStack(Stack):
             self,
             generateResourceName("rotate-secret-strava"),
             runtime=_lambda.Runtime.PYTHON_3_9,
-            handler="secret_rotator.lambda_handler",
+            handler="lambda_function.lambda_handler",
+            # role=strava_secret_lambda_role,
             function_name=generateResourceName("rotate-secret-strava"),
-            code=_lambda.Code.from_asset("../data-pipelines/stravaPipeline/lambdas/"),
+            code=_lambda.Code.from_asset(
+                "../data-pipelines/stravaPipeline/lambdas/secret_rotator"
+            ),
+        )
+        strava_secret_lambda.add_permission(
+            "lambda-invoke-for-secrets-manager",
+            principal=iam.ServicePrincipal("secretsmanager.amazonaws.com"),
+        )
+        strava_secret_lambda.role.add_to_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=["secretsmanager:UpdateSecretVersionStage"],
+                resources=[strava_secret.secret_arn],
+            )
         )
 
         strava_secret.grant_read(strava_secret_lambda)
         strava_secret.grant_write(strava_secret_lambda)
 
-        rotation_rule = events.Rule(
-            self,
-            generateResourceName("strava-rotation-rule"),
-            schedule=events.Schedule.rate(Duration.hours(4)),
-        )
-
-        # Add the Lambda function as the target for the rotation rule
-        rotation_rule.add_target(targets.LambdaFunction(strava_secret_lambda))
         data_sources = ["lastFm", "strava"]
         lambdas = []
 

@@ -31,12 +31,6 @@ def lambda_handler(event, context):
             raise ValueError("Invalid step parameter")
     except Exception as e:
         print(f"Error occurred: {e} in step {step}")
-        # Reset the secret stage to base level (AWSCURRENT)
-        # client.update_secret_version_stage(
-        #     SecretId=arn,
-        #     VersionStage="AWSCURRENT",
-        #     RemoveFromVersionId=token
-        # )
         sys.exit(1)
 
 
