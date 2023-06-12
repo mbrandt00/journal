@@ -53,6 +53,7 @@ class JournalStack(Stack):
             "lastFm-secret",
             secret_complete_arn="arn:aws:secretsmanager:us-east-1:211076628958:secret:lastFm-secret-6jyCjo",
         )
+
         raw_bucket = s3.Bucket(
             self,
             generateResourceName("s3-raw"),
@@ -88,7 +89,9 @@ class JournalStack(Stack):
         strava_secret.grant_read(strava_secret_lambda)
         strava_secret.grant_write(strava_secret_lambda)
 
+
         # ------------ingest lambdas-------------------------------------
+
         data_sources = ["lastFm", "strava"]
         lambdas = []
 
@@ -119,6 +122,7 @@ class JournalStack(Stack):
             cdk_lambda.add_to_role_policy(
                 iam.PolicyStatement(actions=["s3:*"], resources=["*"])
             )
+
             for secret in secrets:
                 if secret.secret_name.split("-")[0] == data_source:
                     secret.grant_read(cdk_lambda)

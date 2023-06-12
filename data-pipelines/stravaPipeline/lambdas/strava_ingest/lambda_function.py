@@ -1,3 +1,4 @@
+
 import os
 from stravalib.client import Client
 from layer.api import access_token
@@ -10,6 +11,7 @@ from layer.activity import Activity
 today = dt.datetime.today()
 
 date_path = f"year={today.year}/month={today.strftime('%m')}/day={today.strftime('%d')}"
+
 
 
 def lambda_handler(event, context):
@@ -27,6 +29,7 @@ def lambda_handler(event, context):
         after=after,
         before=before,
     )
+
     all_activities = []
     for activity in activities:
         serialized_activity = Activity(

@@ -17,6 +17,7 @@ date_path = f"year={today.year}/month={today.strftime('%m')}/day={today.strftime
 
 def lambda_handler(event, context):
     if event["time_to"] == "today":
+
         time_to = today
     else:
         time_to = dt.datetime.strptime(event["time_to"], "%m-%d-%Y")
