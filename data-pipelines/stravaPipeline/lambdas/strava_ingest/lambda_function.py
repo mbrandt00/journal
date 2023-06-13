@@ -1,7 +1,17 @@
+
+import os
 from stravalib.client import Client
 from layer.api import access_token
+from layer.s3 import upload_object
+from layer.utils import dicts_to_jsonl
 import datetime as dt
 from datetime import timedelta
+from layer.activity import Activity
+
+today = dt.datetime.today()
+
+date_path = f"year={today.year}/month={today.strftime('%m')}/day={today.strftime('%d')}"
+
 
 
 def lambda_handler(event, context):
@@ -19,10 +29,28 @@ def lambda_handler(event, context):
         after=after,
         before=before,
     )
+
+    all_activities = []
     for activity in activities:
-        print(f" average_heartrate {activity.average_heartrate}")
-        print(f" average_speed {activity.average_speed}")
-        print(f" name {activity.name}")
-        print(f" start_date_local {activity.start_date_local}")
-        print(f" start_latlng {activity.start_latlng}")
-        print(f" end_latlng {activity.end_latlng}")
+        serialized_activity = Activity(
+            average_heartrate=activity.average_heartrate,
+            average_speed=activity.average_speed,
+            name=activity.name,
+            start_date_local=activity.start_date_local,
+            start_latlng=activity.start_latlng,
+            end_latlng=activity.end_latlng,
+            pr_count=activity.pr_count,
+            description=activity.description,
+            commute=activity.commute,
+            distance=activity.distance,
+            elapsed_time=activity.elapsed_time,
+        ).serialize_activity()
+        all_activities.append(serialized_activity)
+
+    if all_activities:
+        filename = f"strava_raw_{today.strftime('%H:%M')}.json"
+        s3_loc = os.path.join("strava", date_path, filename)
+        print(type(all_activities))
+        print(all_activities)
+        json_str = dicts_to_jsonl(all_activities)
+        upload_object(os.environ["RAW_BUCKET"], s3_loc, json_str, is_string=False)

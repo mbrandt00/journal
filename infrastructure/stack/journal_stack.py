@@ -14,6 +14,7 @@ from aws_cdk import (
     aws_stepfunctions as sfn,
     aws_stepfunctions_tasks as sfn_tasks,
     aws_glue as glue,
+    aws_s3 as s3,
     aws_secretsmanager as secretsmanager,
     Duration,
 )
@@ -53,6 +54,13 @@ class JournalStack(Stack):
             secret_complete_arn="arn:aws:secretsmanager:us-east-1:211076628958:secret:lastFm-secret-6jyCjo",
         )
 
+        raw_bucket = s3.Bucket(
+            self,
+            generateResourceName("s3-raw"),
+            bucket_name=generateResourceName("s3-raw"),
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+        )
+
         secrets = [strava_secret, lastFm_secret]
 
         strava_secret_lambda = _lambda.Function(
@@ -81,10 +89,12 @@ class JournalStack(Stack):
         strava_secret.grant_read(strava_secret_lambda)
         strava_secret.grant_write(strava_secret_lambda)
 
+
+        # ------------ingest lambdas-------------------------------------
+
         data_sources = ["lastFm", "strava"]
         lambdas = []
 
-        # ingest lambdas
         for data_source in data_sources:
             lambda_function_name = generateResourceName(f"ingest-{data_source}")
 
@@ -107,8 +117,12 @@ class JournalStack(Stack):
                     ),
                 ),
                 # role=lambda_role,
-                environment={},
+                environment={"RAW_BUCKET": raw_bucket.bucket_name},
             )
+            cdk_lambda.add_to_role_policy(
+                iam.PolicyStatement(actions=["s3:*"], resources=["*"])
+            )
+
             for secret in secrets:
                 if secret.secret_name.split("-")[0] == data_source:
                     secret.grant_read(cdk_lambda)
