@@ -68,7 +68,7 @@ class JournalStack(Stack):
             generateResourceName("rotate-secret-strava"),
             runtime=_lambda.Runtime.PYTHON_3_9,
             handler="lambda_function.lambda_handler",
-            # role=strava_secret_lambda_role,
+            timeout=Duration.seconds(300),
             function_name=generateResourceName("rotate-secret-strava"),
             code=_lambda.Code.from_asset(
                 "../data-pipelines/stravaPipeline/lambdas/secret_rotator"
@@ -88,7 +88,6 @@ class JournalStack(Stack):
 
         strava_secret.grant_read(strava_secret_lambda)
         strava_secret.grant_write(strava_secret_lambda)
-
 
         # ------------ingest lambdas-------------------------------------
 
@@ -116,7 +115,6 @@ class JournalStack(Stack):
                         ],
                     ),
                 ),
-                # role=lambda_role,
                 environment={"RAW_BUCKET": raw_bucket.bucket_name},
             )
             cdk_lambda.add_to_role_policy(
