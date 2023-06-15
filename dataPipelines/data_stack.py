@@ -1,6 +1,8 @@
-from .glue_helper import _create_glue_job  # create_glue_workflow,
 import os
 import sys
+from .cdk_helpers.glue_helper import (
+    _create_glue_job,
+)  # create_glue_workflow,
 from aws_cdk import (
     # Duration,
     Stack,
@@ -20,7 +22,7 @@ from aws_cdk import (
 )
 from constructs import Construct
 
-sys.path += ["./glue_helper.py"]
+sys.path += ["./cdk_helpers/glue_helper.py"]
 
 
 def generateResourceName(resource):
@@ -37,7 +39,7 @@ def generateResourceName(resource):
     return application_prefix + "-" + resource
 
 
-class JournalStack(Stack):
+class DataStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
@@ -63,32 +65,6 @@ class JournalStack(Stack):
 
         secrets = [strava_secret, lastFm_secret]
 
-        strava_secret_lambda = _lambda.Function(
-            self,
-            generateResourceName("rotate-secret-strava"),
-            runtime=_lambda.Runtime.PYTHON_3_9,
-            handler="lambda_function.lambda_handler",
-            timeout=Duration.seconds(300),
-            function_name=generateResourceName("rotate-secret-strava"),
-            code=_lambda.Code.from_asset(
-                "../data-pipelines/stravaPipeline/lambdas/secret_rotator"
-            ),
-        )
-        strava_secret_lambda.add_permission(
-            "lambda-invoke-for-secrets-manager",
-            principal=iam.ServicePrincipal("secretsmanager.amazonaws.com"),
-        )
-        strava_secret_lambda.role.add_to_policy(
-            iam.PolicyStatement(
-                effect=iam.Effect.ALLOW,
-                actions=["secretsmanager:UpdateSecretVersionStage"],
-                resources=[strava_secret.secret_arn],
-            )
-        )
-
-        strava_secret.grant_read(strava_secret_lambda)
-        strava_secret.grant_write(strava_secret_lambda)
-
         # ------------ingest lambdas-------------------------------------
 
         data_sources = ["lastFm", "strava"]
@@ -105,7 +81,7 @@ class JournalStack(Stack):
                 function_name=lambda_function_name,
                 timeout=Duration.seconds(900),
                 code=_lambda.Code.from_asset(
-                    f"../data-pipelines/{data_source}Pipeline/lambdas/{data_source}_ingest/",
+                    f"./dataPipelines/{data_source}Pipeline/lambdas/{data_source}_ingest/",
                     bundling=bo(
                         image=_lambda.Runtime.PYTHON_3_9.bundling_image,
                         command=[

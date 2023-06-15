@@ -1,0 +1,22 @@
+# strava_secret_lambda = _lambda.Function(
+#     self,
+#     generateResourceName("rotate-secret-strava"),
+#     runtime=_lambda.Runtime.PYTHON_3_9,
+#     handler="lambda_function.lambda_handler",
+#     timeout=Duration.seconds(300),
+#     function_name=generateResourceName("rotate-secret-strava"),
+#     code=_lambda.Code.from_asset(
+#         "../data-pipelines/stravaPipeline/lambdas/secret_rotator"
+#     ),
+# )
+# strava_secret_lambda.add_permission(
+#     "lambda-invoke-for-secrets-manager",
+#     principal=iam.ServicePrincipal("secretsmanager.amazonaws.com"),
+# )
+# strava_secret_lambda.role.add_to_policy(
+#     iam.PolicyStatement(
+#         effect=iam.Effect.ALLOW,
+#         actions=["secretsmanager:UpdateSecretVersionStage"],
+#         resources=[strava_secret.secret_arn],
+#     )
+# )
