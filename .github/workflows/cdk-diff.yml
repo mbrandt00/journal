@@ -31,6 +31,5 @@ jobs:
           aws-region: us-east-1
       - name: Resource Diff
         run: |
-          cd infrastructure
           pip install -q -r requirements.txt
           cdk diff
