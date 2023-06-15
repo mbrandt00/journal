@@ -32,10 +32,11 @@ jobs:
           aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
           aws-region: us-east-1
       - name: Deploy to Dev
+      #maybe pass in stacks as arg here?
         run: |
           echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
           echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
           echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-          cd infrastructure
           pip install -q -r requirements.txt
-          cdk deploy --require-approval=never
+
+          cdk deploy --all --require-approval=never
