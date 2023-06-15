@@ -72,7 +72,15 @@ class DataStack(Stack):
 
         for data_source in data_sources:
             lambda_function_name = generateResourceName(f"ingest-{data_source}")
-
+            lambda_layer = _lambda.LayerVersion(
+                self,
+                generateResourceName(
+                    f"{data_source}-layer",
+                ),
+                code=_lambda.AssetCode.from_asset(
+                    f"./dataPipelines/{data_source}Pipeline/lambdas/{data_source}_ingest/layer"
+                ),
+            )
             cdk_lambda = _lambda.Function(
                 self,
                 lambda_function_name,
@@ -82,15 +90,16 @@ class DataStack(Stack):
                 timeout=Duration.seconds(900),
                 code=_lambda.Code.from_asset(
                     f"./dataPipelines/{data_source}Pipeline/lambdas/{data_source}_ingest/",
-                    bundling=bo(
-                        image=_lambda.Runtime.PYTHON_3_9.bundling_image,
-                        command=[
-                            "bash",
-                            "-c",
-                            "pip install --no-cache -r requirements.txt -t /asset-output && cp -au . /asset-output",
-                        ],
-                    ),
+                    # bundling=bo(
+                    #     image=_lambda.Runtime.PYTHON_3_9.bundling_image,
+                    #     command=[
+                    #         "bash",
+                    #         "-c",
+                    #         "pip install --no-cache -r requirements.txt -t /asset-output && cp -au . /asset-output",
+                    #     ],
+                    # ),
                 ),
+                layers=[lambda_layer],
                 environment={"RAW_BUCKET": raw_bucket.bucket_name},
             )
             cdk_lambda.add_to_role_policy(
