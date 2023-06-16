@@ -5,6 +5,22 @@ ureg = pint.UnitRegistry()
 # TODO make datetime and time delta better serialized
 
 
+def create_activity(activity):
+    Activity(
+        average_heartrate=activity.average_heartrate,
+        average_speed=activity.average_speed,
+        name=activity.name,
+        start_date_local=activity.start_date_local,
+        start_latlng=activity.start_latlng,
+        end_latlng=activity.end_latlng,
+        pr_count=activity.pr_count,
+        description=activity.description,
+        commute=activity.commute,
+        distance=activity.distance,
+        elapsed_time=activity.elapsed_time,
+    ).serialize_activity()
+
+
 class Activity:
     def __init__(
         self,
