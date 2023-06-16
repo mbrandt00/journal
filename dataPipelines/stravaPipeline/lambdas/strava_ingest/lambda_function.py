@@ -1,6 +1,6 @@
 import os
 from stravalib.client import Client
-from layer.api import get_current_access_token
+from layer.api import get_current_access_token, create_activity
 from layer.s3 import upload_object
 from layer.utils import dicts_to_jsonl, date_decider
 import datetime as dt
@@ -24,7 +24,8 @@ def lambda_handler(event, context):
 
     try:
         for activity in activities:
-            all_activities.append(create_activity(activity))
+            detailed_activity = create_activity(client.get_activity(activity.id))
+            all_activities.append(detailed_activity)
     except Exception as e:
         print(f"exception: {e}")
 
@@ -34,4 +35,4 @@ def lambda_handler(event, context):
         json_str = dicts_to_jsonl(all_activities)
         upload_object(os.environ["RAW_BUCKET"], s3_loc, json_str, is_string=False)
     else:
-        print("no activities found")
+        print("no activities")
