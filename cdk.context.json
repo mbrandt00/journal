@@ -1,7 +1,0 @@
-{
-  "ssm:account=211076628958:parameterName=use1-dev-journal-react-certificate-arn:region=us-east-1": "arn:aws:acm:us-east-1:211076628958:certificate/35279a7e-aa17-4399-a871-0a647c09a6be",
-  "hosted-zone:account=211076628958:domainName=www.chronolog.us:region=us-east-1": {
-    "Id": "/hostedzone/Z03076592SGJKLETZKIK8",
-    "Name": "www.chronolog.us."
-  }
-}
