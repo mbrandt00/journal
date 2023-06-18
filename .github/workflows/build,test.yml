@@ -127,7 +127,7 @@ jobs:
 
   cdk-diff:
     name: Cloud Resource Diff
-    needs: [ test_rails_api, files-changed ]
+    needs: [ test_rails_api, files-changed, build_react_artifact ]
     if: ${{needs.files-changed.outputs.journal_stack || needs.files-changed.outputs.datapipelines}}
     secrets: inherit
     uses: ./.github/workflows/cdk-diff.yml
