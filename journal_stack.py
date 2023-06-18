@@ -47,7 +47,7 @@ class JournalStack(Stack):
         zone = route53.HostedZone.from_lookup(
             self, generateResourceName("hosted-zone"), domain_name=apex_domain
         )
-        react_bucket = s3.bucket(
+        react_bucket = s3.Bucket(
             self,
             generateResourceName("react-bucket"),
             bucket_name=generateResourceName("react-bucket"),

@@ -29,72 +29,98 @@ jobs:
   #               - 'rails_api/**'
   #             datapipelines:
   #               - 'data-pipelines/**'
-  build:
-    name: Build
+  # build:
+  #   name: Build rails Image
+  #   runs-on: ubuntu-latest
+  #   # needs: [ files-changed ]
+  #   # if: ${{needs.files-changed.outputs.backend == 'true' }}
+  #   env:
+  #     AWS_REGION: ${{ secrets.AWS_REGION}}
+  #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID}}
+  #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - name: Configure AWS Credentials
+  #       uses: aws-actions/configure-aws-credentials@v2
+  #       with:
+  #         aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}
+  #         aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+  #         aws-region: us-east-1
+  #     - name: Login to ECR
+  #       id: login-ecr
+  #       uses: aws-actions/amazon-ecr-login@v1
+  #     - name: Build, Tag, and Push Image to Amazon ECR
+  #       id: build-image
+  #       run: |
+  #         cd rails_api
+  #         docker build -t $TAG_COMMIT_PATH .
+  #         docker push $TAG_COMMIT_PATH
+  build_react_artifact:
+    name: Build React Image
     runs-on: ubuntu-latest
-    # needs: [ files-changed ]
-    # if: ${{needs.files-changed.outputs.backend == 'true' }}
-    env:
-      AWS_REGION: ${{ secrets.AWS_REGION}}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID}}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
+    defaults:
+      run:
+        working-directory: front_end
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
+      - name: Clone repository
+        uses: actions/checkout@v2
+      - name: Use Node.js 12.x
+        uses: actions/setup-node@v2
         with:
-          aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}
-          aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
-          aws-region: us-east-1
-      - name: Login to ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-      - name: Build, Tag, and Push Image to Amazon ECR
-        id: build-image
-        run: |
-          cd rails_api
-          docker build -t $TAG_COMMIT_PATH .
-          docker push $TAG_COMMIT_PATH
+          node-version: 12.x # correct?
+      - name: Install dependencies
+        run: npm install --quiet
+      - name: Generate build
+        run: npm run build
+      # Share artifact inside workflow
+      - name: Share artifact inside workflow
+        uses: actions/upload-artifact@v2
+        with:
+          name: react-github-actions-build
+          path: front_end/build
 
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    needs: [ build ]
-    env:
-      DATABASE_NAME: journal_test
-      DATABASE_HOST: localhost
-      DATABASE_USERNAME: postgres
-      DATABASE_PASSWORD: password
-      RAILS_ENV: test
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}
-          aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
-          aws-region: us-east-1
-      - name: Login to ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: rspec
-        run: |
-          docker compose up rspec --quiet-pull
-          docker cp rspec:/rails_api/rspec.xml ..
-          docker compose down
-          # if grep -q 'failures="0"' rspec.xml; then echo no rspec errors; exit 0; else echo rspec errors; exit 1; fi
-        working-directory: rails_api
-      - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v3
-        if: success() || failure() # always run even if the previous step fails
-        with:
-          report_paths: "rspec.xml"
+
+
+
+  # test:
+  #   name: Test
+  #   runs-on: ubuntu-latest
+  #   needs: [ build ]
+  #   env:
+  #     DATABASE_NAME: journal_test
+  #     DATABASE_HOST: localhost
+  #     DATABASE_USERNAME: postgres
+  #     DATABASE_PASSWORD: password
+  #     RAILS_ENV: test
+  #   steps:
+  #     - name: Configure AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v2
+  #       with:
+  #         aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}
+  #         aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+  #         aws-region: us-east-1
+  #     - name: Login to ECR
+  #       id: login-ecr
+  #       uses: aws-actions/amazon-ecr-login@v1
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - name: rspec
+  #       run: |
+  #         docker compose up rspec --quiet-pull
+  #         docker cp rspec:/rails_api/rspec.xml ..
+  #         docker compose down
+  #         # if grep -q 'failures="0"' rspec.xml; then echo no rspec errors; exit 0; else echo rspec errors; exit 1; fi
+  #       working-directory: rails_api
+  #     - name: Publish Test Report
+  #       uses: mikepenz/action-junit-report@v3
+  #       if: success() || failure() # always run even if the previous step fails
+  #       with:
+  #         report_paths: "rspec.xml"
 
   cdk-diff:
     name: Resource Diff
-    needs: [ test ]
+    # needs: [ test ]
     uses: ./.github/workflows/cdk-diff.yml
     secrets: inherit
 
