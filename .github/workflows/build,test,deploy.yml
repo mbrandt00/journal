@@ -97,7 +97,7 @@ jobs:
 
   cdk-diff:
     name: Resource Diff
-    needs: [ build_react_artifact ]
+    needs: [ build_react_artifact, build_rails_image ]
     uses: ./.github/workflows/cdk-diff.yml
     secrets: inherit
 
