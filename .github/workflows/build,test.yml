@@ -89,10 +89,10 @@ jobs:
           name: react_build
           path: front_end/build
 
-  test:
-    name: Test
+  test_rails_api:
+    name: Test Rails API
     runs-on: ubuntu-latest
-    needs: [ build_react_artifact, files-changed ]
+    needs: [ build_rails_image, files-changed ]
     if: ${{needs.files-changed.outputs.backend == 'true' }}
     env:
       DATABASE_NAME: journal_test
@@ -127,7 +127,7 @@ jobs:
 
   cdk-diff:
     name: Cloud Resource Diff
-    needs: [ files-changed ]
+    needs: [ test_rails_api, files-changed ]
     if: ${{needs.files-changed.outputs.journal_stack || needs.files-changed.outputs.datapipelines}}
     secrets: inherit
     uses: ./.github/workflows/cdk-diff.yml
