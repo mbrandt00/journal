@@ -12,6 +12,7 @@ jobs:
       ECR_REPO: ${{secrets.ECR_REPO}}
       JOURNAL_DOMAIN: ${{secrets.JOURNAL_DOMAIN}}
       AWS_ACCOUNT_ID: ${{secrets.AWS_ACCOUNT_ID}}
+      AWS_REGION: ${{secrets.AWS_REGION}}
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python 3.9
@@ -38,7 +39,6 @@ jobs:
           name: react_build
           path: front_end/build
       - name: Deploy to Dev
-      #maybe pass in stacks as arg here?
         run: |
           echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
           echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
