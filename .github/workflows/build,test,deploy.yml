@@ -74,10 +74,10 @@ jobs:
       - name: Generate build
         run: npm run build
       # Share artifact inside workflow
-      - name: Share artifact inside workflow
-        uses: actions/upload-artifact@v2
+      - name: Upload React Artifact
+        uses: actions/upload-artifact@v3
         with:
-          name: react-github-actions-build
+          name: react_build
           path: front_end/build
 
 
@@ -120,7 +120,7 @@ jobs:
 
   cdk-diff:
     name: Resource Diff
-    # needs: [ test ]
+    needs: [ build_react_artifact ]
     uses: ./.github/workflows/cdk-diff.yml
     secrets: inherit
 

@@ -130,19 +130,7 @@ class JournalStack(Stack):
         react_deploy = s3_deployment.BucketDeployment(
             self,
             generateResourceName("react-s3-deployment"),
-            sources=[
-                s3_deployment.Source.asset(
-                    os.path.abspath(
-                        os.path.join(
-                            os.path.dirname(__file__),
-                            os.pardir,
-                            os.pardir,
-                            "front_end",
-                            "build",
-                        )
-                    )
-                )
-            ],
+            sources=[s3_deployment.Source.asset("./front_end/build")],
             destination_bucket=react_bucket,
             distribution=react_distribution,
             distribution_paths=["/*"],
