@@ -8,6 +8,8 @@ jobs:
       ENVIRONMENT: dev
       PROJECT_NAME: journal
       ECR_REPO: ${{secrets.ECR_REPO}}
+      JOURNAL_DOMAIN: ${{secrets.JOURNAL_DOMAIN}}
+      AWS_ACCOUNT_ID: ${{secrets.AWS_ACCOUNT_ID}}
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python 3.9
@@ -28,7 +30,12 @@ jobs:
         with:
           aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}
           aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
-          aws-region: us-east-1
+          aws-region: ${{secrets.AWS_REGION}}
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: react_build
+          path: front_end/build
       - name: Resource Diff
         run: |
           pip install -q -r requirements.txt

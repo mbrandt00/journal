@@ -10,6 +10,9 @@ jobs:
       ENVIRONMENT: dev
       PROJECT_NAME: journal
       ECR_REPO: ${{secrets.ECR_REPO}}
+      JOURNAL_DOMAIN: ${{secrets.JOURNAL_DOMAIN}}
+      AWS_ACCOUNT_ID: ${{secrets.AWS_ACCOUNT_ID}}
+      AWS_REGION: ${{secrets.AWS_REGION}}
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python 3.9
@@ -23,7 +26,6 @@ jobs:
       - name: Install Python dependencies and CDK
         run: |
           python -m pip install --upgrade pip
-          # install your Python dependencies here
           npm install -g aws-cdk
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@master
@@ -31,8 +33,12 @@ jobs:
           aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}
           aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
           aws-region: us-east-1
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: react_build
+          path: front_end/build
       - name: Deploy to Dev
-      #maybe pass in stacks as arg here?
         run: |
           echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
           echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
