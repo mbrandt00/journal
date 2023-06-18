@@ -54,7 +54,7 @@ jobs:
         run: npm install --quiet
       - name: Generate build
         run: npm run build
-      # Share artifact inside workflow
+
       - name: Upload React Artifact
         uses: actions/upload-artifact@v3
         with:
