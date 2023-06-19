@@ -44,8 +44,15 @@ class JournalStack(Stack):
         apex_domain = os.getenv("JOURNAL_DOMAIN")
         # react resources
         react_domain = apex_domain  # config for dev here
-        zone = route53.HostedZone.from_lookup(
-            self, generateResourceName("hosted-zone"), domain_name=apex_domain
+        hosted_zone = route53.HostedZone(self, "HostedZone", zone_name=apex_domain)
+        react_certificate = acm.Certificate(
+            self,
+            generateResourceName("react-certificate"),
+            domain_name=apex_domain,
+            certificate_name=generateResourceName(
+                "react-certificate"
+            ),  # Optionally provide an certificate name
+            validation=acm.CertificateValidation.from_dns(hosted_zone),
         )
         react_bucket = s3.Bucket(
             self,
@@ -65,10 +72,10 @@ class JournalStack(Stack):
         )
         react_bucket.grant_read(react_oai)
 
-        react_cert_arn_param = generateResourceName("react-certificate-arn")
-        react_cert_arn = str(
-            ssm.StringParameter.value_from_lookup(self, react_cert_arn_param)
-        )
+        # react_cert_arn_param = generateResourceName("react-certificate-arn")
+        # react_cert_arn = str(
+        #     ssm.StringParameter.value_from_lookup(self, react_cert_arn_param)
+        # )
         react_distribution = cloudfront.CloudFrontWebDistribution(
             self,
             generateResourceName("react-cf-distribution"),
@@ -79,18 +86,18 @@ class JournalStack(Stack):
                     ),
                     behaviors=[
                         cloudfront.Behavior(is_default_behavior=True),
-                        cloudfront.Behavior(
-                            path_pattern="/*",
-                            viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.HTTPS_ONLY,
-                            forwarded_values=cloudfront.CfnDistribution.ForwardedValuesProperty(
-                                query_string=True,
-                                headers=[
-                                    "Origin",
-                                    "Access-Control-Request-Method",
-                                    "Access-Control-Request-Headers",
-                                ],
-                            ),
-                        ),
+                        #     cloudfront.Behavior(
+                        #         path_pattern="/*",
+                        #         viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.HTTPS_ONLY,
+                        #         forwarded_values=cloudfront.CfnDistribution.ForwardedValuesProperty(
+                        #             query_string=True,
+                        #             headers=[
+                        #                 "Origin",
+                        #                 "Access-Control-Request-Method",
+                        #                 "Access-Control-Request-Headers",
+                        #             ],
+                        #         ),
+                        #     ),
                     ],
                 )
             ],
@@ -109,9 +116,7 @@ class JournalStack(Stack):
                 ),
             ],
             viewer_certificate=cloudfront.ViewerCertificate.from_acm_certificate(
-                certificate=acm.Certificate.from_certificate_arn(
-                    self, generateResourceName("react-cert"), react_cert_arn
-                ),
+                certificate=react_certificate,
                 aliases=[react_domain],
             ),
         )
@@ -124,7 +129,7 @@ class JournalStack(Stack):
             target=route53.RecordTarget.from_alias(
                 route53_targets.CloudFrontTarget(react_distribution)
             ),
-            zone=zone,
+            zone=hosted_zone,
         )
         # deploy react front end
         react_deploy = s3_deployment.BucketDeployment(
