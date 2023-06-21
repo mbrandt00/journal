@@ -130,7 +130,7 @@ class JournalStack(Stack):
         s3_deployment.BucketDeployment(
             self,
             generateResourceName("react-s3-deployment"),
-            sources=[s3_deployment.Source.asset("./front_end/build")],
+  c          sources=[s3_deployment.Source.asset("./front_end/build")],
             destination_bucket=react_bucket,
             distribution=react_distribution,
             distribution_paths=["/*"],
@@ -146,15 +146,17 @@ class JournalStack(Stack):
             ),
             zone=hosted_zone,
         )
-        # route53.ARecord(
-        #     self,
-        #     generateResourceName("react-www-record"),
-        #     record_name=,
-        #     target=route53.RecordTarget.from_alias(
-        #         route53_targets.CloudFrontTarget(react_distribution)
-        #     ),
-        #     zone=hosted_zone,
-        # )
+
+        # Create the Route53 record to alias www.chronolog.us to the CloudFront distribution
+        route53.ARecord(
+            self,
+            "react-www-record",
+            zone=hosted_zone,
+            target=route53.RecordTarget.from_alias(
+                route53_targets.CloudFrontTarget(react_distribution)
+            ),
+            record_name="www.chronolog.us",
+        )
 
         # ----------backend---------------
 
