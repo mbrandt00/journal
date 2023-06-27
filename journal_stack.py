@@ -130,7 +130,7 @@ class JournalStack(Stack):
         s3_deployment.BucketDeployment(
             self,
             generateResourceName("react-s3-deployment"),
-  c          sources=[s3_deployment.Source.asset("./front_end/build")],
+            sources=[s3_deployment.Source.asset("./front_end/build")],
             destination_bucket=react_bucket,
             distribution=react_distribution,
             distribution_paths=["/*"],
@@ -160,77 +160,77 @@ class JournalStack(Stack):
 
         # ----------backend---------------
 
-        # vpc = ec2.Vpc(
+        vpc = ec2.Vpc(
+            self,
+            generateResourceName("journal-vpc"),
+            ip_addresses=ec2.IpAddresses.cidr("10.0.0.0/16"),
+            max_azs=2,
+            nat_gateways=1,
+        )  # set cidr range?
+
+        repo = ecr.Repository.from_repository_name(
+            self, generateResourceName("ecr"), repository_name=os.getenv("ECR_REPO")
+        )
+        apex_domain = os.getenv("RAILS_DOMAIN")
+        # rails_hosted_zone = route53.HostedZone(
         #     self,
-        #     generateResourceName("journal-vpc"),
-        #     ip_addresses=ec2.IpAddresses.cidr("10.0.0.0/16"),
-        #     max_azs=2,
-        #     nat_gateways=1,
-        # )  # set cidr range?
+        #     generateResourceName("rails-hosted-zone"),
+        #     zone_name=apex_domain,
+        #     comment="Zone for Backend",
+        # )
+        rails_domain = apex_domain
 
-        # repo = ecr.Repository.from_repository_name(
-        #     self, generateResourceName("ecr"), repository_name=os.getenv("ECR_REPO")
-        # )
-        # apex_domain = os.getenv("RAILS_DOMAIN")
-        # # rails_hosted_zone = route53.HostedZone(
-        # #     self,
-        # #     generateResourceName("rails-hosted-zone"),
-        # #     zone_name=apex_domain,
-        # #     comment="Zone for Backend",
-        # # )
-        # rails_domain = apex_domain
+        # Rails API IAM User
+        rails_iam_user_name = generateResourceName("rails-iam-user")
+        rails_iam_user = iam.User(
+            self, rails_iam_user_name, user_name=rails_iam_user_name
+        )
 
-        # # Rails API IAM User
-        # rails_iam_user_name = generateResourceName("rails-iam-user")
-        # rails_iam_user = iam.User(
-        #     self, rails_iam_user_name, user_name=rails_iam_user_name
-        # )
+        # Create Access Key and store in Secrets Manager
+        rails_iam_user_access_key = iam.AccessKey(
+            self, f"{rails_iam_user_name}-access-key", user=rails_iam_user
+        )
+        rails_iam_user_access_key_secret = secretsmanager.Secret(
+            self,
+            f"{rails_iam_user_name}-secret",
+            secret_name=f"{rails_iam_user_name}-secret",
+            secret_object_value={
+                "AccessKey": SecretValue.unsafe_plain_text(
+                    rails_iam_user_access_key.access_key_id
+                ),
+                "SecretAccessKey": rails_iam_user_access_key.secret_access_key,
+            },
+        )
 
-        # # Create Access Key and store in Secrets Manager
-        # rails_iam_user_access_key = iam.AccessKey(
-        #     self, f"{rails_iam_user_name}-access-key", user=rails_iam_user
-        # )
-        # rails_iam_user_access_key_secret = secretsmanager.Secret(
-        #     self,
-        #     f"{rails_iam_user_name}-secret",
-        #     secret_name=f"{rails_iam_user_name}-secret",
-        #     secret_object_value={
-        #         "AccessKey": SecretValue.unsafe_plain_text(
-        #             rails_iam_user_access_key.access_key_id
-        #         ),
-        #         "SecretAccessKey": rails_iam_user_access_key.secret_access_key,
-        #     },
-        # )
+        # fargate service
 
-        # # fargate service
+        task_definition = ecs.FargateTaskDefinition(
+            self,
+            generateResourceName("Task-Definition"),
+            cpu=256,
+            memory_limit_mib=512,
+        )
 
-        # task_definition = ecs.FargateTaskDefinition(
-        #     self,
-        #     generateResourceName("Task-Definition"),
-        #     cpu=256,
-        #     memory_limit_mib=512,
-        # )
-
-        # task_definition.add_container(
-        #     "web",
-        #     image=ecs.ContainerImage.from_ecr_repository(repo),
-        #     logging=ecs.LogDrivers.aws_logs(stream_prefix="web_container"),
-        #     entry_point=["./docker-scripts/docker-entrypoint.sh"],
-        #     container_name="web",
-        #     cpu=256,
-        #     memory_limit_mib=512,
-        #     port_mappings=[ecs.PortMapping(container_port=80)],
-        # )
-        # fargate = ecs_patterns.ApplicationLoadBalancedFargateService(
-        #     self,
-        #     generateResourceName("ecs-fargateService"),
-        #     vpc=vpc,
-        #     domain_name=rails_domain,
-        #     domain_zone=hosted_zone,
-        #     certificate=certificate,
-        #     health_check_grace_period=Duration.seconds(150),
-        #     enable_execute_command=True,
-        #     cpu=256,
-        #     memory_limit_mib=512,
-        #     task_definition=task_definition,
-        # )
+        task_definition.add_container(
+            "web",
+            image=ecs.ContainerImage.from_ecr_repository(repo),
+            logging=ecs.LogDrivers.aws_logs(stream_prefix="web_container"),
+            entry_point=["./docker-scripts/docker-entrypoint.sh"],
+            container_name="web",
+            cpu=256,
+            memory_limit_mib=512,
+            port_mappings=[ecs.PortMapping(container_port=80)],
+        )
+        fargate = ecs_patterns.ApplicationLoadBalancedFargateService(
+            self,
+            generateResourceName("ecs-fargateService"),
+            vpc=vpc,
+            domain_name=rails_domain,
+            domain_zone=hosted_zone,
+            certificate=certificate,
+            health_check_grace_period=Duration.seconds(150),
+            enable_execute_command=True,
+            cpu=256,
+            memory_limit_mib=512,
+            task_definition=task_definition,
+        )
