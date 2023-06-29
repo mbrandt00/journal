@@ -148,15 +148,15 @@ class JournalStack(Stack):
         )
 
         # Create the Route53 record to alias www.chronolog.us to the CloudFront distribution
-        route53.ARecord(
-            self,
-            "react-www-record",
-            zone=hosted_zone,
-            target=route53.RecordTarget.from_alias(
-                route53_targets.CloudFrontTarget(react_distribution)
-            ),
-            record_name="www.chronolog.us",
-        )
+        # route53.ARecord(
+        #     self,
+        #     "react-www-record",
+        #     zone=hosted_zone,
+        #     target=route53.RecordTarget.from_alias(
+        #         route53_targets.CloudFrontTarget(react_distribution)
+        #     ),
+        #     record_name="www.chronolog.us",
+        # )
 
         # ----------backend---------------
 
@@ -172,13 +172,6 @@ class JournalStack(Stack):
             self, generateResourceName("ecr"), repository_name=os.getenv("ECR_REPO")
         )
         apex_domain = os.getenv("RAILS_DOMAIN")
-        # rails_hosted_zone = route53.HostedZone(
-        #     self,
-        #     generateResourceName("rails-hosted-zone"),
-        #     zone_name=apex_domain,
-        #     comment="Zone for Backend",
-        # )
-        rails_domain = apex_domain
 
         # Rails API IAM User
         rails_iam_user_name = generateResourceName("rails-iam-user")
@@ -210,10 +203,12 @@ class JournalStack(Stack):
             cpu=256,
             memory_limit_mib=512,
         )
-
+        image_tag = os.getenv("RAILS_IMAGE_TAG")
         task_definition.add_container(
             "web",
-            image=ecs.ContainerImage.from_ecr_repository(repo),
+            image=ecs.ContainerImage.from_ecr_repository(
+                repo.repository_uri_for_image_tag(image_tag)
+            ),
             logging=ecs.LogDrivers.aws_logs(stream_prefix="web_container"),
             entry_point=["./docker-scripts/docker-entrypoint.sh"],
             container_name="web",
@@ -221,18 +216,20 @@ class JournalStack(Stack):
             memory_limit_mib=512,
             port_mappings=[ecs.PortMapping(container_port=80)],
         )
+
         rails_certificate = acm.Certificate(
             self,
             generateResourceName("rails-certificate"),
-            domain_name=f"api.{apex_domain}",
+            domain_name=apex_domain,
             certificate_name=generateResourceName("rails-certificate"),
             validation=acm.CertificateValidation.from_dns(hosted_zone),
         )
+
         fargate = ecs_patterns.ApplicationLoadBalancedFargateService(
             self,
             generateResourceName("ecs-fargateService"),
             vpc=vpc,
-            domain_name=rails_domain,
+            domain_name=apex_domain,
             domain_zone=hosted_zone,
             certificate=rails_certificate,
             health_check_grace_period=Duration.seconds(150),
