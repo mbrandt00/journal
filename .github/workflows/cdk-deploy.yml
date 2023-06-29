@@ -13,6 +13,7 @@ jobs:
       JOURNAL_DOMAIN: ${{secrets.JOURNAL_DOMAIN}}
       AWS_ACCOUNT_ID: ${{secrets.AWS_ACCOUNT_ID}}
       AWS_REGION: ${{secrets.AWS_REGION}}
+      RAILS_IMAGE_TAG: ${{github.sha}}
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python 3.9
