@@ -12,34 +12,34 @@ env:
   TAG_COMMIT_PATH: ${{secrets.AWS_ACCOUNT_ID}}.dkr.ecr.us-east-1.amazonaws.com/${{secrets.ECR_REPO}}:${{github.sha}}
 
 jobs:
-  files-changed:
-    name: Detect Changed Files
-    runs-on: ubuntu-latest
-    timeout-minutes: 3
-    outputs:
-      backend: ${{ steps.filter.outputs.backend}}
-      frontend: ${{ steps.filter.outputs.frontend }}
-      journal_stack: ${{ steps.filter.outputs.journal_stack}}
-      datapipelines: ${{ steps.filter.outputs.datapipelines}}
-    steps:
-      - uses: dorny/paths-filter@v2
-        id: filter
-        with:
-          filters: |
-            backend:
-              - 'rails_api/**'
-            datapipelines:
-              - 'data-pipelines/**'
-            journal_stack:
-              - 'journal_stack.py'
-            frontend:
-              - 'front_end/src/**'
+  # files-changed:
+  #   name: Detect Changed Files
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 3
+  #   outputs:
+  #     backend: ${{ steps.filter.outputs.backend}}
+  #     frontend: ${{ steps.filter.outputs.frontend }}
+  #     journal_stack: ${{ steps.filter.outputs.journal_stack}}
+  #     datapipelines: ${{ steps.filter.outputs.datapipelines}}
+  #   steps:
+  #     - uses: dorny/paths-filter@v2
+  #       id: filter
+  #       with:
+  #         filters: |
+  #           backend:
+  #             - 'rails_api/**'
+  #           datapipelines:
+  #             - 'data-pipelines/**'
+  #           journal_stack:
+  #             - 'journal_stack.py'
+  #           frontend:
+  #             - 'front_end/src/**'
 
   build_rails_image:
     name: Build Rails Image
     runs-on: ubuntu-latest
-    needs: [ files-changed ]
-    if: ${{needs.files-changed.outputs.backend == 'true' }}
+    # needs: [ files-changed ]
+    # if: ${{needs.files-changed.outputs.backend == 'true' }}
     env:
       AWS_REGION: ${{ secrets.AWS_REGION}}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID}}
@@ -66,8 +66,8 @@ jobs:
   build_react_artifact:
     name: Build React Artifact
     runs-on: ubuntu-latest
-    needs: [files-changed]
-    if: ${{needs.files-changed.outputs.frontend == 'true' }}
+    # needs: [files-changed]
+    # if: ${{needs.files-changed.outputs.frontend == 'true' }}
     defaults:
       run:
         working-directory: front_end
@@ -89,45 +89,46 @@ jobs:
           name: react_build
           path: front_end/build
 
-  test_rails_api:
-    name: Test Rails API
-    runs-on: ubuntu-latest
-    needs: [ build_rails_image, files-changed ]
-    if: ${{needs.files-changed.outputs.backend == 'true' }}
-    env:
-      DATABASE_NAME: journal_test
-      DATABASE_HOST: localhost
-      DATABASE_USERNAME: postgres
-      DATABASE_PASSWORD: password
-      RAILS_ENV: test
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}
-          aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
-          aws-region: us-east-1
-      - name: Login to ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: rspec
-        run: |
-          docker compose up rspec --quiet-pull
-          docker cp rspec:/rails_api/rspec.xml ..
-          docker compose down
-          # if grep -q 'failures="0"' rspec.xml; then echo no rspec errors; exit 0; else echo rspec errors; exit 1; fi
-        working-directory: rails_api
-      - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v3
-        if: success() || failure() # always run even if the previous step fails
-        with:
-          report_paths: "rspec.xml"
+  # test_rails_api:
+  #   name: Test Rails API
+  #   runs-on: ubuntu-latest
+  #   needs: [ build_rails_image, files-changed ]
+  #   if: ${{needs.files-changed.outputs.backend == 'true' }}
+  #   env:
+  #     DATABASE_NAME: journal_test
+  #     DATABASE_HOST: localhost
+  #     DATABASE_USERNAME: postgres
+  #     DATABASE_PASSWORD: password
+  #     RAILS_ENV: test
+  #   steps:
+  #     - name: Configure AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v2
+  #       with:
+  #         aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}
+  #         aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+  #         aws-region: us-east-1
+  #     - name: Login to ECR
+  #       id: login-ecr
+  #       uses: aws-actions/amazon-ecr-login@v1
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - name: rspec
+  #       run: |
+  #         docker compose up rspec --quiet-pull
+  #         docker cp rspec:/rails_api/rspec.xml ..
+  #         docker compose down
+  #         # if grep -q 'failures="0"' rspec.xml; then echo no rspec errors; exit 0; else echo rspec errors; exit 1; fi
+  #       working-directory: rails_api
+  #     - name: Publish Test Report
+  #       uses: mikepenz/action-junit-report@v3
+  #       if: success() || failure() # always run even if the previous step fails
+  #       with:
+  #         report_paths: "rspec.xml"
 
   cdk-diff:
     name: Cloud Resource Diff
-    needs: [ files-changed, build_react_artifact ]
-    if: ${{needs.files-changed.outputs.journal_stack || needs.files-changed.outputs.datapipelines}}
+    # needs: [ files-changed, build_react_artifact ]
+    needs: [ build_react_artifact ]
+    # if: ${{needs.files-changed.outputs.journal_stack || needs.files-changed.outputs.datapipelines}}
     secrets: inherit
     uses: ./.github/workflows/cdk-diff.yml

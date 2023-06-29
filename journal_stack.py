@@ -1,11 +1,11 @@
 import os
 import sys
+import json
 from aws_cdk import (
     # Duration,
     Stack,
     aws_ecr as ecr,
     aws_iam as iam,
-    aws_glue as glue,
     aws_ec2 as ec2,
     aws_rds as rds,
     aws_cloudfront as cloudfront,
@@ -19,6 +19,7 @@ from aws_cdk import (
     aws_secretsmanager as secretsmanager,
     aws_ecs as ecs,
     aws_ecs_patterns as ecs_patterns,
+    aws_secretsmanager as secrets_manager,
     RemovalPolicy,
     SecretValue,
     Duration,
@@ -62,7 +63,7 @@ class JournalStack(Stack):
             certificate_name=generateResourceName("react-certificate"),
             validation=acm.CertificateValidation.from_dns(hosted_zone),
         )
-        
+
         # Origin Access Identity
         react_bucket = s3.Bucket(
             self,
@@ -166,7 +167,37 @@ class JournalStack(Stack):
             ip_addresses=ec2.IpAddresses.cidr("10.0.0.0/16"),
             max_azs=2,
             nat_gateways=1,
-        )  # set cidr range?
+        )
+        # RDS Master Credentials
+        rds_credentials = secrets_manager.Secret(
+            self,
+            generateResourceName("rds-secret"),
+            secret_name=generateResourceName("rds-secret"),
+            generate_secret_string=secrets_manager.SecretStringGenerator(
+                secret_string_template=json.dumps(
+                    {"username": os.getenv("DATABASE_USERNAME")}
+                ),
+                exclude_punctuation=True,
+                include_space=False,
+                generate_string_key="password",
+            ),
+        )
+
+        # rds DB
+        dbInstance = rds.DatabaseInstance(
+            self,
+            generateResourceName("rds"),
+            credentials=rds.Credentials.from_secret(rds_credentials),
+            engine=rds.DatabaseInstanceEngine.postgres(
+                version=rds.PostgresEngineVersion.VER_13_6
+            ),
+            instance_type=ec2.InstanceType.of(
+                ec2.InstanceClass.T3, ec2.InstanceSize.MICRO
+            ),
+            vpc=vpc,
+            publicly_accessible=False,
+            removal_policy=RemovalPolicy.DESTROY,
+        )
 
         repo = ecr.Repository.from_repository_name(
             self, generateResourceName("ecr"), repository_name=os.getenv("ECR_REPO")
