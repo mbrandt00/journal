@@ -62,7 +62,7 @@ class JournalStack(Stack):
             certificate_name=generateResourceName("react-certificate"),
             validation=acm.CertificateValidation.from_dns(hosted_zone),
         )
-        
+
         # Origin Access Identity
         react_bucket = s3.Bucket(
             self,
@@ -166,7 +166,36 @@ class JournalStack(Stack):
             ip_addresses=ec2.IpAddresses.cidr("10.0.0.0/16"),
             max_azs=2,
             nat_gateways=1,
-        )  # set cidr range?
+        )
+
+        db_subnet = ec2.Subnet(
+            self,
+            generateResourceName("rds-db-subnet"),
+            vpc=vpc,
+            cidr_block="10.0.1.0/24",
+            availability_zone=vpc.availability_zones[0],
+        )
+
+        # rds DB
+        database_instance_base = (
+            rds.DatabaseInstanceBase.from_database_instance_attributes(
+                self,
+                generateResourceName("db-instance"),
+                instance_endpoint_address="journal-db-dev",
+                instance_identifier="instanceIdentifier",
+                port=5432,
+                security_groups=[],
+                subnet_group=ec2.SubnetGroup(
+                    self,
+                    generateResourceName("rds-db-subnet-group"),
+                    vpc=vpc,
+                    vpc_subnets=ec2.SubnetSelection(subnets=[db_subnet]),
+                ),
+                engine=rds.DatabaseInstanceEngine.postgres,
+                instance_resource_id=generateResourceName("db-instance"),
+                vpc=vpc,
+            )
+        )
 
         repo = ecr.Repository.from_repository_name(
             self, generateResourceName("ecr"), repository_name=os.getenv("ECR_REPO")
