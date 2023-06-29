@@ -1,11 +1,11 @@
 import os
 import sys
+import json
 from aws_cdk import (
     # Duration,
     Stack,
     aws_ecr as ecr,
     aws_iam as iam,
-    aws_glue as glue,
     aws_ec2 as ec2,
     aws_rds as rds,
     aws_cloudfront as cloudfront,
@@ -19,6 +19,7 @@ from aws_cdk import (
     aws_secretsmanager as secretsmanager,
     aws_ecs as ecs,
     aws_ecs_patterns as ecs_patterns,
+    aws_secretsmanager as secrets_manager,
     RemovalPolicy,
     SecretValue,
     Duration,
@@ -167,34 +168,35 @@ class JournalStack(Stack):
             max_azs=2,
             nat_gateways=1,
         )
-
-        db_subnet = ec2.Subnet(
+        # RDS Master Credentials
+        rds_credentials = secrets_manager.Secret(
             self,
-            generateResourceName("rds-db-subnet"),
-            vpc=vpc,
-            cidr_block="10.0.1.0/24",
-            availability_zone=vpc.availability_zones[0],
+            generateResourceName("rds-secret"),
+            secret_name=generateResourceName("rds-secret"),
+            generate_secret_string=secrets_manager.SecretStringGenerator(
+                secret_string_template=json.dumps(
+                    {"username": os.getenv("DATABASE_USERNAME")}
+                ),
+                exclude_punctuation=True,
+                include_space=False,
+                generate_string_key="password",
+            ),
         )
 
         # rds DB
-        database_instance_base = (
-            rds.DatabaseInstanceBase.from_database_instance_attributes(
-                self,
-                generateResourceName("db-instance"),
-                instance_endpoint_address="journal-db-dev",
-                instance_identifier="instanceIdentifier",
-                port=5432,
-                security_groups=[],
-                subnet_group=ec2.SubnetGroup(
-                    self,
-                    generateResourceName("rds-db-subnet-group"),
-                    vpc=vpc,
-                    vpc_subnets=ec2.SubnetSelection(subnets=[db_subnet]),
-                ),
-                engine=rds.DatabaseInstanceEngine.postgres,
-                instance_resource_id=generateResourceName("db-instance"),
-                vpc=vpc,
-            )
+        dbInstance = rds.DatabaseInstance(
+            self,
+            generateResourceName("rds"),
+            credentials=rds.Credentials.from_secret(rds_credentials),
+            engine=rds.DatabaseInstanceEngine.postgres(
+                version=rds.PostgresEngineVersion.VER_13_6
+            ),
+            instance_type=ec2.InstanceType.of(
+                ec2.InstanceClass.T3, ec2.InstanceSize.MICRO
+            ),
+            vpc=vpc,
+            publicly_accessible=False,
+            removal_policy=RemovalPolicy.DESTROY,
         )
 
         repo = ecr.Repository.from_repository_name(
