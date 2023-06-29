@@ -62,7 +62,7 @@ class JournalStack(Stack):
             certificate_name=generateResourceName("react-certificate"),
             validation=acm.CertificateValidation.from_dns(hosted_zone),
         )
-
+        
         # Origin Access Identity
         react_bucket = s3.Bucket(
             self,
