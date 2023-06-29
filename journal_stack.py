@@ -206,9 +206,7 @@ class JournalStack(Stack):
         image_tag = os.getenv("RAILS_IMAGE_TAG")
         task_definition.add_container(
             "web",
-            image=ecs.ContainerImage.from_ecr_repository(
-                repo.repository_uri_for_image_tag(image_tag)
-            ),
+            image=ecs.EcrImage(repo, image_tag),
             logging=ecs.LogDrivers.aws_logs(stream_prefix="web_container"),
             entry_point=["./docker-scripts/docker-entrypoint.sh"],
             container_name="web",
