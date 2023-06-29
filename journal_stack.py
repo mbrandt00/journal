@@ -55,11 +55,11 @@ class JournalStack(Stack):
             domain_name=f"{apex_domain}.",
         )
 
-        certificate = acm.Certificate(
+        react_certificate = acm.Certificate(
             self,
-            generateResourceName("certificate"),
+            generateResourceName("react-certificate"),
             domain_name=apex_domain,
-            certificate_name=generateResourceName("certificate"),
+            certificate_name=generateResourceName("react-certificate"),
             validation=acm.CertificateValidation.from_dns(hosted_zone),
         )
 
@@ -121,7 +121,7 @@ class JournalStack(Stack):
                 ),
             ],
             viewer_certificate=cloudfront.ViewerCertificate.from_acm_certificate(
-                certificate=certificate,
+                certificate=react_certificate,
                 aliases=[apex_domain],
             ),
         )
@@ -221,13 +221,20 @@ class JournalStack(Stack):
             memory_limit_mib=512,
             port_mappings=[ecs.PortMapping(container_port=80)],
         )
+        rails_certificate = acm.Certificate(
+            self,
+            generateResourceName("rails-certificate"),
+            domain_name=f"api.{apex_domain}",
+            certificate_name=generateResourceName("rails-certificate"),
+            validation=acm.CertificateValidation.from_dns(hosted_zone),
+        )
         fargate = ecs_patterns.ApplicationLoadBalancedFargateService(
             self,
             generateResourceName("ecs-fargateService"),
             vpc=vpc,
             domain_name=rails_domain,
             domain_zone=hosted_zone,
-            certificate=certificate,
+            certificate=rails_certificate,
             health_check_grace_period=Duration.seconds(150),
             enable_execute_command=True,
             cpu=256,
