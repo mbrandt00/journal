@@ -188,9 +188,7 @@ class JournalStack(Stack):
             self,
             generateResourceName("rds"),
             credentials=rds.Credentials.from_secret(rds_credentials),
-            engine=rds.DatabaseInstanceEngine.postgres(
-                version=rds.PostgresEngineVersion.VER_13_6
-            ),
+            engine=rds.DatabaseInstanceEngine.POSTGRES,
             instance_type=ec2.InstanceType.of(
                 ec2.InstanceClass.T3, ec2.InstanceSize.MICRO
             ),

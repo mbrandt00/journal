@@ -13,3 +13,4 @@ cdk.context.json
 test.ipynb
 demo-sam/
 .vscode/
+.env.ci
