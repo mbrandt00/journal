@@ -184,7 +184,7 @@ class JournalStack(Stack):
         )
 
         # rds DB
-        dbInstance = rds.DatabaseInstance(
+        rds_instance = rds.DatabaseInstance(
             self,
             generateResourceName("rds"),
             credentials=rds.Credentials.from_secret(rds_credentials),
@@ -192,6 +192,7 @@ class JournalStack(Stack):
             instance_type=ec2.InstanceType.of(
                 ec2.InstanceClass.T3, ec2.InstanceSize.MICRO
             ),
+            database_name=os.getenv("DATABASE_NAME"),
             vpc=vpc,
             publicly_accessible=False,
             removal_policy=RemovalPolicy.DESTROY,
@@ -242,6 +243,30 @@ class JournalStack(Stack):
             cpu=256,
             memory_limit_mib=512,
             port_mappings=[ecs.PortMapping(container_port=80)],
+            environment={
+                "RAILS_ENV": os.getenv("RAILS_ENV"),
+                "AWS_REGION": os.getenv("AWS_REGION"),
+                "JOURNAL_RAILS_DOMAIN": apex_domain,
+                "JOURNAL_REACT_DOMAIN": os.getenv("JOURNAL_DOMAIN"),
+                "DATABASE_HOST": rds_instance.db_instance_endpoint_address,
+                "DATABASE_NAME": os.getenv("DATABASE_NAME"),
+                "DATABASE_USERNAME": SecretValue.unsafe_unwrap(
+                    rds_credentials.secret_value_from_json("username")
+                ),
+                "DATABASE_PASSWORD": SecretValue.unsafe_unwrap(
+                    rds_credentials.secret_value_from_json("password")
+                ),
+                "RAILS_AWS_ACCESS_KEY": SecretValue.unsafe_unwrap(
+                    rails_iam_user_access_key_secret.secret_value_from_json("AccessKey")
+                ),
+                "RAILS_AWS_SECRET_KEY": SecretValue.unsafe_unwrap(
+                    rails_iam_user_access_key_secret.secret_value_from_json(
+                        "SecretAccessKey"
+                    )
+                ),
+                "DOMAIN_NAME": apex_domain,
+                "REGION": os.getenv("AWS_REGION"),
+            },
         )
 
         rails_certificate = acm.Certificate(

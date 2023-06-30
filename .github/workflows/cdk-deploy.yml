@@ -15,7 +15,9 @@ jobs:
       AWS_REGION: ${{secrets.AWS_REGION}}
       RAILS_IMAGE_TAG: ${{github.sha}}
       RAILS_DOMAIN: ${{secrets.RAILS_DOMAIN}}
+      DATABASE_NAME: ${{secrets.DATABASE_NAME}}
       DATABASE_USERNAME: ${{secrets.DATABASE_USERNAME}}
+      RAILS_ENV: dev
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python 3.9
