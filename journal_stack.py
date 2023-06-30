@@ -296,3 +296,10 @@ class JournalStack(Stack):
             ec2.Port.tcp(5432),
             "Ingress rule for Fargate containers to access RDS",
         )
+
+        # Configure healthcheck
+        fargate.target_group.configure_health_check(
+            path="/healthcheck",
+            interval=Duration.seconds(100),
+            timeout=Duration.seconds(10),
+        )
