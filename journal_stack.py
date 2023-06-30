@@ -290,3 +290,9 @@ class JournalStack(Stack):
             memory_limit_mib=512,
             task_definition=task_definition,
         )
+
+        rds_instance.connections.allow_from(
+            fargate.service,
+            ec2.Port.tcp(5432),
+            "Ingress rule for Fargate containers to access RDS",
+        )
