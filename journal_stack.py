@@ -246,8 +246,8 @@ class JournalStack(Stack):
             environment={
                 "RAILS_ENV": os.getenv("RAILS_ENV"),
                 "AWS_REGION": os.getenv("AWS_REGION"),
-                "JOURNAL_RAILS_DOMAIN": apex_domain,
-                "JOURNAL_REACT_DOMAIN": os.getenv("JOURNAL_DOMAIN"),
+                "RAILS_DOMAIN": os.getenv("RAILS_DOMAIN"),
+                "REACT_DOMAIN": os.getenv("JOURNAL_DOMAIN"),
                 "DATABASE_HOST": rds_instance.db_instance_endpoint_address,
                 "DATABASE_NAME": os.getenv("DATABASE_NAME"),
                 "DATABASE_USERNAME": SecretValue.unsafe_unwrap(
@@ -264,7 +264,6 @@ class JournalStack(Stack):
                         "SecretAccessKey"
                     )
                 ),
-                "DOMAIN_NAME": apex_domain,
                 "REGION": os.getenv("AWS_REGION"),
             },
         )
