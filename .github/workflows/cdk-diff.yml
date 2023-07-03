@@ -15,6 +15,7 @@ jobs:
       RAILS_DOMAIN: ${{secrets.RAILS_DOMAIN}}
       DATABASE_NAME: ${{secrets.DATABASE_NAME}}
       DATABASE_USERNAME: ${{secrets.DATABASE_USERNAME}}
+      REACT_APP_SERVER_URL: ${{secrets.JOURNAL_DOMAIN}}
       RAILS_ENV: development
     steps:
       - uses: actions/checkout@v3

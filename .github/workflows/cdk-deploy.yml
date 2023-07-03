@@ -18,6 +18,7 @@ jobs:
       DATABASE_NAME: ${{secrets.DATABASE_NAME}}
       DATABASE_USERNAME: ${{secrets.DATABASE_USERNAME}}
       RAILS_ENV: development
+      REACT_APP_SERVER_URL: ${{secrets.JOURNAL_DOMAIN}}
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python 3.9

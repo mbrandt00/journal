@@ -4,12 +4,13 @@ default: &default
   encoding: unicode
   username: <%= ENV['DATABASE_USERNAME'] %>
   password: <%= ENV['DATABASE_PASSWORD'] %>
-  host: <%= ENV['DATABASE_HOST'] %>
+  host: <%= ENV.fetch('DATABASE_HOST', 'localhost') %>
   database: <%= ENV['DATABASE_NAME'] %>
   # For details on connection pooling, see Rails configuration guide
   # https://guides.rubyonrails.org/configuring.html#database-pooling
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   schema_search_path: public
+  port: 5432
 
 development:
   <<: *default
