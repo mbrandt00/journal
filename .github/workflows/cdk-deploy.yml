@@ -44,6 +44,12 @@ jobs:
         with:
           name: react_build
           path: front_end/build
+      - name: Inject env variables
+        run: |
+          npm i -g react-inject-env >/dev/null
+          cd front_end
+          npx react-inject-env set
+          cd ..
       - name: Deploy to Dev
         run: |
           echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"

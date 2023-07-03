@@ -1,4 +1,3 @@
-import logo from "./logo.svg";
 import axios from "../src/components/server";
 import { useEffect, useState } from "react";
 function App() {
