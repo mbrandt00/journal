@@ -1,0 +1,5 @@
+# Individual Files
+.env
+/tmp
+/log
+/public
