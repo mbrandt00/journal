@@ -1,7 +1,6 @@
 import axios from "axios";
 import { env } from "../env";
 
-/*global baseURL*/
 const instance = axios.create({
   baseURL: env.REACT_APP_SERVER_URL ?? process.env.REACT_APP_SERVER_URL,
   headers: { "Access-Control-Allow-Origin": "*" },
