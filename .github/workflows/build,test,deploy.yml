@@ -10,6 +10,7 @@ permissions:
 
 env:
   TAG_COMMIT_PATH: ${{secrets.AWS_ACCOUNT_ID}}.dkr.ecr.us-east-1.amazonaws.com/${{secrets.ECR_REPO}}:${{github.sha}}
+  TAG_BASE: ${{secrets.AWS_ACCOUNT_ID}}.dkr.ecr.us-east-1.amazonaws.com/${{secrets.ECR_REPO}}:base-image
 
 jobs:
   build_rails_image:
@@ -35,7 +36,8 @@ jobs:
         id: build-image
         run: |
           cd rails_api
-          docker build -t $TAG_COMMIT_PATH .
+          docker pull $TAG_BASE || true
+          docker build --cache-from $TAG_BASE -t $TAG_COMMIT_PATH .
           docker push $TAG_COMMIT_PATH
   build_react_artifact:
     name: Build React Image
